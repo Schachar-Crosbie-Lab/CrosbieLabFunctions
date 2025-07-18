@@ -1,7 +1,9 @@
 #### Load language ####
+
+
 #### Declares language upload loading the package.
 .onAttach <- function(libname, pkgname) {
-  if(packageVersion('CrosbieLabFunctions') != "0.1.1"){
+  if(utils::packageVersion('CrosbieLabFunctions') != "0.1.1"){
     packageStartupMessage("CrosbieLabFunctions has been updated and needs to be reinstalled")
     devtools::update_packages('CrosbieLabFunctions')
   } else {
@@ -113,7 +115,7 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
   compare_df <- dplyr::full_join(input_df_sum, output_df_sum, by = c('variable')) |>
     dplyr::mutate(dif_in_mean = round(get(paste0('mean_',names[2])) - get(paste0('mean_',names[1])), digits = 2),
            dif_in_count = round(get(paste0('count_',names[2])) - get(paste0('count_',names[1])), digits = 2)) |>
-    dplyr::select(variable, dplyr::contains('data_type')
+    dplyr::select(variable, dplyr::contains('data_type'),
                   dplyr::contains('count'), dplyr::contains('missing'), dplyr::contains('mean'),
                   dplyr::contains('median'), dplyr::contains('max'), dplyr::contains('min'), dplyr::contains('stdev')) |>
     dplyr::mutate(different =

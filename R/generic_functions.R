@@ -107,12 +107,13 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
   compare_df <- dplyr::full_join(input_df_sum, output_df_sum, by = c('variable')) |>
     dplyr::mutate(dif_in_mean = round(get(paste0('mean_',names[2])) - get(paste0('mean_',names[1])), digits = 2),
            dif_in_count = round(get(paste0('count_',names[2])) - get(paste0('count_',names[1])), digits = 2)) |>
-    dplyr::select(variable, data_type_output,
+    dplyr::select(variable, dplyr::contains('data_type')
                   dplyr::contains('count'), dplyr::contains('missing'), dplyr::contains('mean'),
                   dplyr::contains('median'), dplyr::contains('max'), dplyr::contains('min'), dplyr::contains('stdev')) |>
     dplyr::mutate(different =
                     is.na(get(paste0('count_',names[2]))) | is.na(get(paste0('count_',names[1])))
-                  | dif_in_count != 0 | dif_in_mean != 0)
+                  | dif_in_count != 0 | dif_in_mean != 0 |
+                    get(paste0('data_type_',names[1])) != get(paste0('data_type_',names[2])))
 
 
   return(compare_df)

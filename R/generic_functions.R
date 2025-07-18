@@ -1,8 +1,13 @@
 #### Load language ####
 #### Declares language upload loading the package.
 .onAttach <- function(libname, pkgname) {
-  #if(packageVersion('CrosbieLabFunctions') != )
-  packageStartupMessage("CrosbieLabFunctions has been loaded")
+  if(packageVersion('CrosbieLabFunctions') != "0.1.1"){
+    packageStartupMessage("CrosbieLabFunctions has been updated and needs to be reinstalled")
+    devtools::update_packages('CrosbieLabFunctions')
+  } else {
+    packageStartupMessage("CrosbieLabFunctions has been loaded and is up-to-date")
+  }
+
 }
 
 #### Global Variables ####

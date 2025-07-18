@@ -1,11 +1,15 @@
 #### Load language ####
-
-
 #### Declares language upload loading the package.
 .onAttach <- function(libname, pkgname) {
-  if(utils::packageVersion('CrosbieLabFunctions') != "0.1.1"){
-    packageStartupMessage("CrosbieLabFunctions has been updated and needs to be reinstalled")
-    devtools::update_packages('CrosbieLabFunctions')
+  if(utils::packageVersion('CrosbieLabFunctions') != "0.1.2"){
+
+    cli::cli_ul(paste0("This version of CrosbieLabFunctions is out of date. Please follow these instructions to re-install CrosbieLabFunctions. \n\n",
+                       "1. Restart R - Go to the session tab and select Restart R\n\n",
+                       "2. Use pak or devtools to reinstall the package \n\n",
+                       "   devtools - {.code devtools::install_github('jclutton/CrosbieLabFunctions')}\n\n",
+                       "   pak - {.code pak::pkg_install('jclutton/CrosbieLabFunctions')}"))
+    stop()
+
   } else {
     packageStartupMessage("CrosbieLabFunctions has been loaded and is up-to-date")
   }

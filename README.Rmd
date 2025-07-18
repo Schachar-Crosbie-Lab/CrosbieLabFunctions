@@ -24,9 +24,15 @@ The goal of CrosbieLabFunctions is to create a host of functions that will be us
 
 You can install the development version of CrosbieLabFunctions from [GitHub](https://github.com/) with:
 
-``` {r}
-# install.packages("pak")
-pak::pak("jclutton/CrosbieLabFunctions")
+``` {r, eval = FALSE}
+### Use Pak
+#install.packages('pak')
+pak::pkg_install("jclutton/CrosbieLabFunctions")
+
+
+### Use Devtools
+# install.packages("devtools")
+devtools::install_github('jclutton/CrosbieLabFunctions')
 ```
 
 

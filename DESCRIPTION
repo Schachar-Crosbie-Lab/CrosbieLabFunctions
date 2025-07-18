@@ -17,7 +17,7 @@ LazyData: true
 URL: https://github.com/jclutton/CrosbieLabFunctions
 BugReports: https://github.com/jclutton/CrosbieLabFunctions/issues
 Imports: 
-    devtools,
+    cli,
     dplyr,
     methods,
     purrr,

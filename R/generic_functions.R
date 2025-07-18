@@ -1,6 +1,7 @@
 #### Load language ####
 #### Declares language upload loading the package.
 .onAttach <- function(libname, pkgname) {
+  #if(packageVersion('CrosbieLabFunctions') != )
   packageStartupMessage("CrosbieLabFunctions has been loaded")
 }
 

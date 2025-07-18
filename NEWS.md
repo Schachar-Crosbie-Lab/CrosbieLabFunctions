@@ -1,3 +1,3 @@
 # CrosbieLabFunctions 0.2.0
 
-* Initial CRAN submission.
+* Made changes to handle update notifications

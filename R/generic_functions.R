@@ -8,7 +8,7 @@
                        "2. Use pak or devtools to reinstall the package \n\n",
                        "   devtools - {.code devtools::install_github('Schachar-Crosbie-Lab/CrosbieLabFunctions')}\n\n",
                        "   pak - {.code pak::pkg_install('Schachar-Crosbie-Lab/CrosbieLabFunctions')}"))
-    stop()
+    #stop()
 
   } else {
     packageStartupMessage("CrosbieLabFunctions has been loaded and is up-to-date")

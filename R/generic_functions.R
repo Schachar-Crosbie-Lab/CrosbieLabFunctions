@@ -6,8 +6,8 @@
     cli::cli_ul(paste0("This version of CrosbieLabFunctions is out of date. Please follow these instructions to re-install CrosbieLabFunctions. \n\n",
                        "1. Restart R - Go to the session tab and select Restart R\n\n",
                        "2. Use pak or devtools to reinstall the package \n\n",
-                       "   devtools - {.code devtools::install_github('jclutton/CrosbieLabFunctions')}\n\n",
-                       "   pak - {.code pak::pkg_install('jclutton/CrosbieLabFunctions')}"))
+                       "   devtools - {.code devtools::install_github('Schachar-Crosbie-Lab/CrosbieLabFunctions')}\n\n",
+                       "   pak - {.code pak::pkg_install('Schachar-Crosbie-Lab/CrosbieLabFunctions')}"))
     stop()
 
   } else {
@@ -147,14 +147,6 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 #' @returns A data frame with changes
 #'
 #'
-df_in <- data.frame(identifier = c(1:20), num = c(1:20))
-
-df_out <- test_in |>
-  dplyr::mutate(new_col = 'test') |>
-  dplyr::mutate(num = dplyr::case_when(num > 15 ~ 15,
-                         T ~ num))
-
-identifier_column = 'identifier'
 
 track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL){
 

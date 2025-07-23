@@ -130,3 +130,54 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 
   return(compare_df)
 }
+
+#### Track Changes ####
+#' @name track_changes
+#'
+#' @title Track Changes
+#'
+#' @description This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
+#'
+#' @param df_in The dataframe before the changes
+#' @param df_out The dataframe after the changes
+#'
+#' @import dplyr
+#' @importFrom tidyr pivot_longer
+#'
+#' @returns A data frame with changes
+#'
+#'
+df_in <- data.frame(identifier = c(1:20), num = c(1:20))
+
+df_out <- test_in |>
+  dplyr::mutate(new_col = 'test') |>
+  dplyr::mutate(num = dplyr::case_when(num > 15 ~ 15,
+                         T ~ num))
+
+identifier_column = 'identifier'
+
+track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL){
+
+  if(is.null(identifier_column[1])){
+    stop("Unfortunately this is designed to work with an identifier column. Please specify which column in your dataframes are the identifier column. This identifier column must match between the two projects.")
+  }
+
+  df_in_long <- df_in |>
+    dplyr::mutate(dplyr::across(all_of(dplyr::everything()), ~as.character(.x))) |>
+    tidyr::pivot_longer(cols = -c(identifier_column))
+
+  df_out_long <- df_out |>
+    dplyr::mutate(dplyr::across(all_of(dplyr::everything()), ~as.character(.x))) |>
+    tidyr::pivot_longer(cols = -c(identifier_column))
+
+  join <- dplyr::full_join(df_in_long, df_out_long,
+                    by = c(identifier_column,'name'),
+                    suffix = c('_in','_out')) |>
+    dplyr::mutate(equal = (value_in == value_out) | (is.na(value_in) & is.na(value_out))) |>
+    dplyr::filter(!equal | is.na(equal)) |>
+    dplyr::mutate(change = dplyr::case_when(equal == FALSE ~ "Changed",
+                                            is.na(value_in) & !is.na(value_out) ~ "Added",
+                                            !is.na(value_in) & is.na(value_out) ~ "Removed"))
+
+  return(join)
+}

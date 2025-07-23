@@ -159,7 +159,7 @@ identifier_column = 'identifier'
 track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL){
 
   if(is.null(identifier_column[1])){
-    stop("Unfortunately this is designed to work with an identifier column. Please specify which column in your dataframes are the identifier column. This identifier column must match between the two projects.")
+    stop("Unfortunately this function is designed to work with an identifier column. Please specify which column in your dataframes are the identifier column. This identifier column must match between the two projects.")
   }
 
   df_in_long <- df_in |>

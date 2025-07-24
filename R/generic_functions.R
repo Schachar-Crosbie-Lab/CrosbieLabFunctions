@@ -18,7 +18,8 @@
 #### Global Variables ####
 globalVariables(c(
   # Variables created in \link(describe_df) and \link(compare_df) but are not variables needed in input data.frame
-  'variable','data_type_output','dif_in_count','dif_in_mean'))
+  'variable','data_type_output','dif_in_count','dif_in_mean',
+  'equal','value_in','value_out'))
 
 #' @name describe_df
 #'
@@ -35,6 +36,9 @@ globalVariables(c(
 #' @export
 #'
 #'
+#'
+#df <- data.frame(num = c(1:20))
+
 describe_df <- function(df = NULL){
 
   #### Format Input Data Frame ####
@@ -42,18 +46,25 @@ describe_df <- function(df = NULL){
   df_order <- data.frame(variable = colnames(df),
                             order = 1:length(colnames(df)))
 
-  # Get summary of numeric data
-  df_num <- df |>
-    dplyr::summarize(dplyr::across(dplyr::where(is.numeric), .fns =
-                                     list(zzdata_type = ~dplyr::first(class(.)),
-                                          zzcount = ~sum(!is.na(.)),
-                                          zzmissing = ~sum(is.na(.)),
-                                          zzmean = ~mean(., na.rm = T),
-                                          zzmedian = ~median(., na.rm = T),
-                                          zzmax = ~max(., na.rm = T),
-                                          zzmin = ~min(., na.rm = T),
-                                          zzstdev = ~sd(., na.rm = T)))) |>
-    tidyr::pivot_longer(dplyr::everything(), names_sep = "_zz", names_to=c('variable', '.value'))
+  has_nums <- any(sapply(df, class) %in% c('numeric','integer'))
+  has_other <- any(sapply(df, class) != 'numeric' & sapply(df, class) != 'integer')
+
+  if(has_nums){
+    # Get summary of numeric data
+    df_num <- df |>
+      dplyr::summarize(dplyr::across(dplyr::where(is.numeric), .fns =
+                                       list(zzdata_type = ~dplyr::first(class(.)),
+                                            zzcount = ~sum(!is.na(.)),
+                                            zzmissing = ~sum(is.na(.)),
+                                            zzmean = ~mean(., na.rm = T),
+                                            zzmedian = ~median(., na.rm = T),
+                                            zzmax = ~max(., na.rm = T),
+                                            zzmin = ~min(., na.rm = T),
+                                            zzstdev = ~sd(., na.rm = T)))) |>
+      tidyr::pivot_longer(dplyr::everything(), names_sep = "_zz", names_to=c('variable', '.value'))
+  }
+
+  if(has_other){
 
   # Get summary of non-numeric data
   df_nonnum <- df |>
@@ -62,11 +73,19 @@ describe_df <- function(df = NULL){
                                                zzcount = ~sum(!is.na(.)),
                                                zzmissing = ~sum(is.na(.))))) |>
     tidyr::pivot_longer(dplyr::everything(), names_sep = "_zz", names_to=c('variable', '.value'))
+  }
 
-  # Join into single data.frame
-  df_sum <- dplyr::bind_rows(df_nonnum, df_num) |>
-    dplyr::left_join(df_order, by = c('variable')) |>
-    dplyr::arrange(order)
+  if(has_nums & has_other){
+    # Join into single data.frame
+    df_sum <- dplyr::bind_rows(df_nonnum, df_num) |>
+      dplyr::left_join(df_order, by = c('variable')) |>
+      dplyr::arrange(order)
+  } else if(has_nums){
+    df_sum <- df_num
+  } else {
+    df_sum <- df_nonnum
+  }
+
 
   return(df_sum)
 }
@@ -139,6 +158,7 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 #'
 #' @param df_in The dataframe before the changes
 #' @param df_out The dataframe after the changes
+#' @param identifier_column The identifier column in the data.frame
 #'
 #' @import dplyr
 #' @importFrom tidyr pivot_longer
@@ -149,16 +169,16 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 
 track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL){
 
-  if(is.null(identifier_column[1])){
+  if(is.null(identifier_column)){
     stop("Unfortunately this function is designed to work with an identifier column. Please specify which column in your dataframes are the identifier column. This identifier column must match between the two projects.")
   }
 
   df_in_long <- df_in |>
-    dplyr::mutate(dplyr::across(all_of(dplyr::everything()), ~as.character(.x))) |>
+    dplyr::mutate(dplyr::across(tidyr::all_of(dplyr::everything()), ~as.character(.x))) |>
     tidyr::pivot_longer(cols = -c(identifier_column))
 
   df_out_long <- df_out |>
-    dplyr::mutate(dplyr::across(all_of(dplyr::everything()), ~as.character(.x))) |>
+    dplyr::mutate(dplyr::across(tidyr::all_of(dplyr::everything()), ~as.character(.x))) |>
     tidyr::pivot_longer(cols = -c(identifier_column))
 
   join <- dplyr::full_join(df_in_long, df_out_long,

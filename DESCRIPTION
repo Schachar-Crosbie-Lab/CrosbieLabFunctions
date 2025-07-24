@@ -1,16 +1,16 @@
 Package: CrosbieLabFunctions
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Commonly used functions in the Crosbie Lab to make data analysis more efficient
 Version: 0.2.2
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
+      "Jonathan", "Clutton",
+      email = "jonathan.clutton@sickkids.ca",
       role = c("aut", "cre")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Description: A lot of work is repeatable and can be "functionized." 
+    This is a package of the functions that are commonly used in the Crosbie Lab.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

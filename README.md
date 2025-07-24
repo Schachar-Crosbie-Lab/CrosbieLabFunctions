@@ -8,7 +8,7 @@
 <!-- badges: end -->
 
 The goal of CrosbieLabFunctions is to create a host of functions that
-will be used repetitively in the Crosbie
+will be used repetitively in the Crosbie Lab
 
 ## Installation
 

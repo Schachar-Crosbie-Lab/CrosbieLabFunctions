@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of CrosbieLabFunctions is to create a host of functions that will be used repetitively in the Crosbie
+The goal of CrosbieLabFunctions is to create a host of functions that will be used repetitively in the Crosbie Lab
 
 ## Installation
 

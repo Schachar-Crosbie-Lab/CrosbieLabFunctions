@@ -1,14 +1,13 @@
 #### Load language ####
 #### Declares language upload loading the package.
 .onAttach <- function(libname, pkgname) {
-  if(utils::packageVersion('CrosbieLabFunctions') != "0.2.0"){
+  if(utils::packageVersion('CrosbieLabFunctions') != "0.2.1"){
 
     cli::cli_ul(paste0("This version of CrosbieLabFunctions is out of date. Please follow these instructions to re-install CrosbieLabFunctions. \n\n",
                        "1. Restart R - Go to the session tab and select Restart R\n\n",
                        "2. Use pak or devtools to reinstall the package \n\n",
                        "   devtools - {.code devtools::install_github('Schachar-Crosbie-Lab/CrosbieLabFunctions')}\n\n",
                        "   pak - {.code pak::pkg_install('Schachar-Crosbie-Lab/CrosbieLabFunctions')}"))
-    #stop()
 
   } else {
     packageStartupMessage("CrosbieLabFunctions has been loaded and is up-to-date")

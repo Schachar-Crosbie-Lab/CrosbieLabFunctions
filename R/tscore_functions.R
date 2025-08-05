@@ -40,7 +40,7 @@ get_cis_tscores <- function(df = NULL) {
 
   print(
     df |>
-      dplyr::group_by(gender, youth, p_respondent) |>
+      dplyr::group_by(youth, p_respondent) |>
       dplyr::summarise(n = dplyr::n(),
                        mean = mean(cis_study_tscores, na.rm = T),
                        sd = stats::sd(cis_study_tscores, na.rm = T))

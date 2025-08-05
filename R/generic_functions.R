@@ -19,7 +19,10 @@
 globalVariables(c(
   # Variables created in \link(describe_df) and \link(compare_df) but are not variables needed in input data.frame
   'variable','data_type_output','dif_in_count','dif_in_mean',
-  'equal','value_in','value_out'))
+  'equal','value_in','value_out',
+  'gender','youth','p_respondent','cis_study_tscores'))
+
+
 
 #' @name describe_df
 #'

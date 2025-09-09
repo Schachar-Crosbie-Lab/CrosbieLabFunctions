@@ -129,14 +129,13 @@ expand_checkboxes <- function(dd = NULL){
 #'
 #' @import dplyr
 #' @importFrom tidyr pivot_longer
-#' @importFrom rlang :=
 #'
 #' @returns A redcap export with cleaned checkboxes
 #'
 
 clean_checkboxes <- function(df = NULL, dd = NULL){
 
-  dd_in <- expand_checkboxes(dd) |>
+  dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
     dplyr::filter(field_type != 'descriptive')
 
   # Need unique identifying column to pivot longer
@@ -150,6 +149,8 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   checkboxes_to_fix <- dd_in |>
     dplyr::filter(field_type == "checkbox")
 
+  unique_forms <- unique(checkboxes_to_fix$form_name)
+
   # Create data frame of values to fix
   fix_checkboxes <- df |>
     dplyr::select(id_col, dplyr::all_of(checkboxes_to_fix$field_name))
@@ -157,10 +158,13 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   fix_checkboxes_out <- fix_checkboxes
 
   # evaluate each row in the checkboxes to fix and make NA when the reference variable is NA
-  for(i in 1:nrow(checkboxes_to_fix)){
+  for(i in 1:length(unique_forms)){
 
-    var_name <- checkboxes_to_fix$field_name[i]
-    var_form <- checkboxes_to_fix$form_name[i]
+    var_form <- unique_forms[i]
+
+    var_names <- checkboxes_to_fix |>
+      dplyr::filter(form_name == var_form) |>
+      pull(field_name)
 
     form_vars <- dd_in |>
       dplyr::filter(form_name == var_form) |>
@@ -182,9 +186,10 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
     fix_checkboxes_out <- fix_checkboxes_out |>
       #' Sometimes questions have been moved to inactive instruments
       #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
-      dplyr::mutate(!!var_name := dplyr::case_when(get(!!var_name) == 1 ~ get(!!var_name),
-                                                   !id_col %in% form_long$id_col ~ NA,
-                                                   T ~ get(!!var_name)))
+      dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                              !id_col %in% form_long$id_col ~ NA,
+                                                                              T ~ .x)))
+
   }
 
   df_out <- df |>

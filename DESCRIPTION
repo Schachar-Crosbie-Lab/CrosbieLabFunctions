@@ -22,7 +22,6 @@ Imports:
     janitor,
     methods,
     purrr,
-    rlang,
     stats,
     stringr,
     tidyr

@@ -1,3 +1,5 @@
+# CrosbieLabFunctions 0.4.2
+
 # CrosbieLabFunctions 0.4.1
 
 # CrosbieLabFunctions 0.4.0

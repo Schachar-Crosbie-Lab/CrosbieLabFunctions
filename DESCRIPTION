@@ -19,8 +19,11 @@ BugReports: https://github.com/jclutton/CrosbieLabFunctions/issues
 Imports: 
     cli,
     dplyr,
+    janitor,
     methods,
     purrr,
+    rlang,
     stats,
+    stringr,
     tidyr
 RoxygenNote: 7.3.2

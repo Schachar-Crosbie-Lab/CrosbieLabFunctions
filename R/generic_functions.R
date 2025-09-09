@@ -20,8 +20,11 @@ globalVariables(c(
   # Variables created in \link(describe_df) and \link(compare_df) but are not variables needed in input data.frame
   'variable','data_type_output','dif_in_count','dif_in_mean',
   'equal','value_in','value_out',
-  'gender','youth','p_respondent','cis_study_tscores'))
-
+  'gender','youth','p_respondent','cis_study_tscores',
+  # redcap_data_dictionary_functions.R global variables
+  'field_type', 'form_name', 'field_name', 'value', 'variable_field_name', 'choices_calculations_or_slider_labels',
+  'branching_logic_show_field_only_if', 'question_number_surveys_only', 'field_name', 'field_type', 'field_name_base',
+  'select_choices_or_calculations', 'row_num', 'choice', 'comma', 'raw_value'))
 
 
 #' @name describe_df
@@ -195,3 +198,6 @@ track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL)
 
   return(join)
 }
+
+
+

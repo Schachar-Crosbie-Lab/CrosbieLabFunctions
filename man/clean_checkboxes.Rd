@@ -13,6 +13,7 @@ clean_checkboxes(df = NULL, dd = NULL)
 }
 \value{
 A redcap export with cleaned checkboxes
+
 Checkbox data always export from REDCap as either 0 or 1, regardless of if it's missing or not
 A lot of the 0s should actually be NA, as the participant didn't complete the form
 They are assigned a reference variable from the REDCap instrument that contained the checkbox

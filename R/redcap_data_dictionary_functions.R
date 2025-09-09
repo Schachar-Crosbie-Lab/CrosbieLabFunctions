@@ -13,6 +13,8 @@
 #' @param dd a REDCap data dictionary
 #'
 #' @returns  REDCap data dictionary with corrected names
+#'
+#' @export
 
 clean_redcap_dd_names <- function(dd = NULL){
 
@@ -37,6 +39,8 @@ clean_redcap_dd_names <- function(dd = NULL){
 #'
 #' @title Expand Checkboxes
 #'
+#' @export
+#'
 #' @description REDCap data dictionaries don't match the REDCap exports specifically for checkbox questions. Checkbox questions
 #' append a ___[raw_value] to each question for each answer choice.
 #' This function takes a data dictionary and adds a row for each checkbox answer choice so that the dictionary matches the data frame
@@ -52,6 +56,7 @@ clean_redcap_dd_names <- function(dd = NULL){
 #' The column to match the column names in the dataframe is 'field_name'
 #' The column with the base name (as data dictionaries are usually exported) is 'field_name_base'
 #'
+
 
 expand_checkboxes <- function(dd = NULL){
 
@@ -112,6 +117,8 @@ expand_checkboxes <- function(dd = NULL){
 #'
 #' @title Clean Checkboxes
 #'
+#' @export
+#'
 #' @description
 #' When data are exported from REDCap, checkboxes always export as 1 or 0 regardless of whether the question was completed.
 #' This function corrects the check box data that should be missing by reading in the dataframe of interest and the REDCap data dictionary.
@@ -125,6 +132,8 @@ expand_checkboxes <- function(dd = NULL){
 #' @importFrom rlang :=
 #'
 #' @returns A redcap export with cleaned checkboxes
+#'
+
 clean_checkboxes <- function(df = NULL, dd = NULL){
 
   dd_in <- expand_checkboxes(dd) |>

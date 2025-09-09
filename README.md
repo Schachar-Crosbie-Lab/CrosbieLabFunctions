@@ -18,10 +18,10 @@ You can install the development version of CrosbieLabFunctions from
 ``` r
 ### Use Pak
 #install.packages('pak')
-pak::pkg_install("Schachar-Crosbie-Lab/CrosbieLabFunctions/CrosbieLabFunctions")
+pak::pkg_install("Schachar-Crosbie-Lab/CrosbieLabFunctions")
 
 
 ### Use Devtools
 # install.packages("devtools")
-devtools::install_github('Schachar-Crosbie-Lab/CrosbieLabFunctions/CrosbieLabFunctions')
+devtools::install_github('Schachar-Crosbie-Lab/CrosbieLabFunctions')
 ```

@@ -24,7 +24,7 @@ globalVariables(c(
   # redcap_data_dictionary_functions.R global variables
   'field_type', 'form_name', 'field_name', 'value', 'variable_field_name', 'choices_calculations_or_slider_labels',
   'branching_logic_show_field_only_if', 'question_number_surveys_only', 'field_name', 'field_type', 'field_name_base',
-  'select_choices_or_calculations', 'row_num', 'choice', 'comma', 'raw_value'))
+  'select_choices_or_calculations', 'row_num', 'choice', 'comma', 'raw_value','form'))
 
 
 #' @name describe_df

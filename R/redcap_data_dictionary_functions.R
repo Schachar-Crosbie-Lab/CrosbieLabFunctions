@@ -199,3 +199,80 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
 
   return(df_out)
 }
+
+#### Clean REDCap Statuses ####
+#' @name clean_redcap_statuses
+#'
+#' @title Clean REDCap Status Questions
+#'
+#' @export
+#'
+#' @description
+#' When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as [form_name]_complete.
+#' These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
+#' This function addresses this issue
+#'
+#' @param df The redcap export to clean
+#' @param dd The data dictionary that corresponds to the redcap export to clean
+#'
+#' @import dplyr
+#' @importFrom tidyr pivot_longer
+#'
+#' @returns A redcap export with cleaned status questions
+#'
+
+clean_redcap_statuses <- function(df = NULL, dd = NULL){
+
+  dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
+    dplyr::filter(field_type != 'descriptive')
+
+  # Need unique identifying column to pivot longer
+  id_col = dd_in$field_name[1]
+
+  # Forms to fix
+  forms_to_fix <- data.frame(form = unique(dd_in$form_name)) |>
+    dplyr::mutate(var = paste0(form,'_complete'))
+
+  # Slice of variables
+  status_vars <- df |>
+    select(id_col, all_of(forms_to_fix$var))
+
+  # evaluate each row in the checkboxes to fix and make NA when the reference variable is NA
+  for(i in 1:nrow(forms_to_fix)){
+
+    var_form <- forms_to_fix$form[i]
+    var <- forms_to_fix$var[i]
+
+    form_vars <- dd_in |>
+      dplyr::filter(form_name == var_form) |>
+      dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+      dplyr::select(field_name, field_type)
+
+    form_long <- df |>
+      dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+      dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+      tidyr::pivot_longer(cols = -c(id_col),
+                          names_to = 'field_name')  |>
+      dplyr::left_join(form_vars, by = 'field_name') |>
+      dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                             T ~ value)) |>
+      dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+      dplyr::filter(!is.na(value)) |>
+      dplyr::rename(id_col = !!id_col)
+
+    status_vars <- status_vars |>
+      #' Sometimes questions have been moved to inactive instruments
+      #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+      dplyr::mutate(dplyr::across(dplyr::all_of(var), ~dplyr::case_when(.x %in% c(1,2) ~ .x,
+                                                                        !id_col %in% form_long$id_col ~ NA,
+                                                                        T ~ .x)))
+
+  }
+
+  df_out <- df |>
+    dplyr::select(-dplyr::all_of(forms_to_fix$var)) |>
+    dplyr::bind_cols(status_vars |> dplyr::select(-id_col)) |>
+    dplyr::select(dd_in$field_name, everything())
+
+  return(df_out)
+}

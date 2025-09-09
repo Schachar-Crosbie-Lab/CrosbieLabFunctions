@@ -2,6 +2,7 @@
 
 export(clean_checkboxes)
 export(clean_redcap_dd_names)
+export(clean_redcap_statuses)
 export(compare_df)
 export(describe_df)
 export(expand_checkboxes)

@@ -190,7 +190,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   df_out <- df |>
     dplyr::select(-dplyr::all_of(checkboxes_to_fix$field_name)) |>
     dplyr::bind_cols(fix_checkboxes_out |> dplyr::select(-id_col)) |>
-    dplyr::select(dd_in$field_name)
+    dplyr::select(dd_in$field_name, everything())
 
   return(df_out)
 }

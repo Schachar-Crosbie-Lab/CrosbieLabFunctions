@@ -160,6 +160,8 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 #'
 #' @title Track Changes
 #'
+#' @export
+#'
 #' @description This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
 #'
 #' @param df_in The dataframe before the changes

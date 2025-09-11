@@ -5,7 +5,8 @@
 #' @title Send an Email
 #'
 #' @description It's common in the Crosbie lab to need to send an email as a part of an automated pipeline. R does not provide great functionality for doing so.
-#' This function uses the reticulate package to utilize Python and the smtplib Python package to send emails.
+#' This function uses the reticulate package to utilize Python and the smtplib Python package to send emails. \cr \cr
+#' YOU MUST BE LOGGED INTO THE VPN TO USE
 #'
 #' @param host The host of the server
 #' @param port The port for email sending
@@ -21,7 +22,6 @@
 #'
 #' @export
 
-
 send_email <- function(host = 'smtp.sickkids.ca', port = 25,
                        from = NULL, to = NULL, subject = NULL, body = NULL,
                        attachments = NULL) {
@@ -34,13 +34,14 @@ send_email <- function(host = 'smtp.sickkids.ca', port = 25,
   # Build email
   email = email_lib$mime$multipart$MIMEMultipart()
 
-  # Concatenate recipients
-  if(length(to) >= 2){
-    to <- paste(to, collapse = ", ")
-  }
+  to_list <- reticulate::r_to_py(as.list(to))
 
   # Set email parts
-  email["To"] = to
+  if (length(to) >= 2) {
+    email["To"] <- paste(to, collapse = ", ")
+  } else {
+    email["To"] = to
+  }
   email["From"] = from
   email["Subject"] = subject
 
@@ -70,7 +71,14 @@ send_email <- function(host = 'smtp.sickkids.ca', port = 25,
     }
   }
 
-  server = smtplib_lib$SMTP(host, as.integer(port))
+  # Try to connect to server. Throw error if not connected to VPN
+  tryCatch({
+    server = smtplib_lib$SMTP(host, as.integer(port))
+  }, error = function(e){
+    response = 'failed'
+  }
+
+  )
   email = email_lib$message$Message$as_string(email)
 
   # Try to send the email. Catch the result.
@@ -78,15 +86,15 @@ send_email <- function(host = 'smtp.sickkids.ca', port = 25,
     smtplib_lib$SMTP$sendmail(
       server,
       from,
-      reticulate::r_to_py(as.list(to)),
+      to_list,
       email
     )
 
     response <- 'Successfully sent email'
   }, error = function(e){
     # error handler picks up where error was generated
-    print(paste("Error sending email:  ",e))
-    response <- paste("Error sending email:  ",e)
+    response <- paste("Error sending email:  ",e,"\n\nBe sure that you are logged into the VPN. ")
+    print(cli::cli_alert_danger(response))
   }, finally = function(f){
     return(response)
   }

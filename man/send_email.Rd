@@ -34,5 +34,6 @@ Success of whether email is sent
 }
 \description{
 It's common in the Crosbie lab to need to send an email as a part of an automated pipeline. R does not provide great functionality for doing so.
-This function uses the reticulate package to utilize Python and the smtplib Python package to send emails.
+This function uses the reticulate package to utilize Python and the smtplib Python package to send emails. \cr \cr
+YOU MUST BE LOGGED INTO THE VPN TO USE
 }

@@ -21,6 +21,8 @@ globalVariables(c(
   'variable','data_type_output','dif_in_count','dif_in_mean',
   'equal','value_in','value_out',
   'gender','youth','p_respondent','cis_study_tscores',
+  # send_email
+  'attachment',
   # redcap_data_dictionary_functions.R global variables
   'field_type', 'form_name', 'field_name', 'value', 'variable_field_name', 'choices_calculations_or_slider_labels',
   'branching_logic_show_field_only_if', 'question_number_surveys_only', 'field_name', 'field_type', 'field_name_base',
@@ -72,13 +74,13 @@ describe_df <- function(df = NULL){
 
   if(has_other){
 
-  # Get summary of non-numeric data
-  df_nonnum <- df |>
-    dplyr::summarize(dplyr::across(dplyr::where(purrr::negate(is.numeric)),
-                                   .fns = list(zzdata_type = ~ dplyr::first(class(.)),
-                                               zzcount = ~sum(!is.na(.)),
-                                               zzmissing = ~sum(is.na(.))))) |>
-    tidyr::pivot_longer(dplyr::everything(), names_sep = "_zz", names_to=c('variable', '.value'))
+    # Get summary of non-numeric data
+    df_nonnum <- df |>
+      dplyr::summarize(dplyr::across(dplyr::where(purrr::negate(is.numeric)),
+                                     .fns = list(zzdata_type = ~ dplyr::first(class(.)),
+                                                 zzcount = ~sum(!is.na(.)),
+                                                 zzmissing = ~sum(is.na(.))))) |>
+      tidyr::pivot_longer(dplyr::everything(), names_sep = "_zz", names_to=c('variable', '.value'))
   }
 
   if(has_nums & has_other){
@@ -142,7 +144,7 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
   # Create summary df of differences
   compare_df <- dplyr::full_join(input_df_sum, output_df_sum, by = c('variable')) |>
     dplyr::mutate(dif_in_mean = round(get(paste0('mean_',names[2])) - get(paste0('mean_',names[1])), digits = 2),
-           dif_in_count = round(get(paste0('count_',names[2])) - get(paste0('count_',names[1])), digits = 2)) |>
+                  dif_in_count = round(get(paste0('count_',names[2])) - get(paste0('count_',names[1])), digits = 2)) |>
     dplyr::select(variable, dplyr::contains('data_type'),
                   dplyr::contains('count'), dplyr::contains('missing'), dplyr::contains('mean'),
                   dplyr::contains('median'), dplyr::contains('max'), dplyr::contains('min'), dplyr::contains('stdev')) |>
@@ -190,8 +192,8 @@ track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL)
     tidyr::pivot_longer(cols = -c(identifier_column))
 
   join <- dplyr::full_join(df_in_long, df_out_long,
-                    by = c(identifier_column,'name'),
-                    suffix = c('_in','_out')) |>
+                           by = c(identifier_column,'name'),
+                           suffix = c('_in','_out')) |>
     dplyr::mutate(equal = (value_in == value_out) | (is.na(value_in) & is.na(value_out))) |>
     dplyr::filter(!equal | is.na(equal)) |>
     dplyr::mutate(change = dplyr::case_when(equal == FALSE ~ "Changed",
@@ -201,5 +203,99 @@ track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL)
   return(join)
 }
 
+#### Send Emails ####
+
+#' @name send_email
+#'
+#' @title Send an Email
+#'
+#' @description It's common in the Crosbie lab to need to send an email as a part of an automated pipeline. R does not provide great functionality for doing so.
+#' This function uses the reticulate package to utilize Python and the smtplib Python package to send emails.
+#'
+#' @param host The host of the server
+#' @param port The port for email sending
+#' @param from Email address of person sending email
+#' @param to The email address or email addresses of people receiving email
+#' @param subject Subject header
+#' @param body The body of the email, which will be in HTML
+#' @param attachments paths to one or multiple files to be included
+#'
+#' @import reticulate
+#'
+#' @return Success of whether email is sent
+#'
+#' @export
 
 
+send_email <- function(host = 'smtp.sickkids.ca', port = 25,
+                     from = NULL, to = NULL, subject = NULL, body = NULL,
+                     attachments = NULL) {
+
+  smtplib_lib <- reticulate::import("smtplib")
+  email_lib <- reticulate::import("email")
+  io_lib <- reticulate::import("io")
+  `%as%` <- reticulate::`%as%`
+
+  # Build email
+  email = email_lib$mime$multipart$MIMEMultipart()
+
+  # Concatenate recipients
+  if(length(to) >= 2){
+    to <- paste(to, collapse = ", ")
+  }
+
+  # Set email parts
+  email["To"] = to
+  email["From"] = from
+  email["Subject"] = subject
+
+  # Body
+  body_format = email_lib$mime$text$MIMEText(body, "html")
+  email_lib$message$Message$attach(email, body_format)
+
+  # Attachments
+  if (!is.null(attachments)) {
+
+    for (file in attachments) {
+      with(io_lib$open(file, "rb") %as% attachment, {
+        part = email_lib$mime$multipart$MIMEBase("application", "octet-stream")
+        email_lib$message$Message$set_payload(
+          part,
+          io_lib$BufferedReader$read(attachment)
+        )
+      })
+
+      email_lib$encoders$encode_base64(part)
+      email_lib$message$Message$add_header(
+        part,
+        "Content-disposition",
+        sprintf("attachment; filename= %s", basename(file))
+      )
+      email_lib$message$Message$attach(email, part)
+    }
+  }
+
+  server = smtplib_lib$SMTP(host, as.integer(port))
+  email = email_lib$message$Message$as_string(email)
+
+  # Try to send the email. Catch the result.
+  result = tryCatch({
+    smtplib_lib$SMTP$sendmail(
+      server,
+      from,
+      reticulate::r_to_py(as.list(to)),
+      email
+    )
+
+    response <- 'Successfully sent email'
+  }, error = function(e){
+    # error handler picks up where error was generated
+    print(paste("Error sending email:  ",e))
+    response <- paste("Error sending email:  ",e)
+  }, finally = function(f){
+    return(response)
+  }
+
+  )
+
+}

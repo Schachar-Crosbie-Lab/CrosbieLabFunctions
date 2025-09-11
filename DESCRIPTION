@@ -22,6 +22,7 @@ Imports:
     janitor,
     methods,
     purrr,
+    reticulate,
     stats,
     stringr,
     tidyr

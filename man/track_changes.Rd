@@ -4,7 +4,12 @@
 \alias{track_changes}
 \title{Track Changes}
 \usage{
-track_changes(df_in = NULL, df_out = NULL, identifier_column = NULL)
+track_changes(
+  df_in = NULL,
+  df_out = NULL,
+  identifier_column = NULL,
+  names = NULL
+)
 }
 \arguments{
 \item{df_in}{The dataframe before the changes}
@@ -12,6 +17,8 @@ track_changes(df_in = NULL, df_out = NULL, identifier_column = NULL)
 \item{df_out}{The dataframe after the changes}
 
 \item{identifier_column}{The identifier column in the data.frame}
+
+\item{names}{A length of two vector for renaming the 'values' columns. Pass c('df1', 'df2') to names, where df1 = df_in and df_out = df2 to rename the output columns to match the comparison dataframes}
 }
 \value{
 A data frame with changes
@@ -19,3 +26,8 @@ A data frame with changes
 \description{
 This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
 }
+\section{Development Notes}{
+
+2025-09-12: Added naming functionality
+}
+

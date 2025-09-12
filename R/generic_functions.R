@@ -166,9 +166,13 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 #'
 #' @description This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
 #'
+#' @section Development Notes:
+#' 2025-09-12: Added naming functionality
+#'
 #' @param df_in The dataframe before the changes
 #' @param df_out The dataframe after the changes
 #' @param identifier_column The identifier column in the data.frame
+#' @param names A length of two vector for renaming the 'values' columns. Pass c('df1', 'df2') to names, where df1 = df_in and df_out = df2 to rename the output columns to match the comparison dataframes
 #'
 #' @import dplyr
 #' @importFrom tidyr pivot_longer
@@ -177,18 +181,20 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 #'
 #'
 
-track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL){
+track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL, names = NULL){
 
   if(is.null(identifier_column)){
     stop("Unfortunately this function is designed to work with an identifier column. Please specify which column in your dataframes are the identifier column. This identifier column must match between the two projects.")
   }
 
   df_in_long <- df_in |>
-    dplyr::mutate(dplyr::across(tidyr::all_of(dplyr::everything()), ~as.character(.x))) |>
-    tidyr::pivot_longer(cols = -c(identifier_column))
+    dplyr::mutate(dplyr::across(dplyr::all_of(dplyr::everything()), ~as.character(.x))) |>
+    tidyr::pivot_longer(cols = -c(identifier_column)) |>
+    dplyr::rename(variable = paste0('variable_',names[1]))
+
 
   df_out_long <- df_out |>
-    dplyr::mutate(dplyr::across(tidyr::all_of(dplyr::everything()), ~as.character(.x))) |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(dplyr::everything()), ~as.character(.x))) |>
     tidyr::pivot_longer(cols = -c(identifier_column))
 
   join <- dplyr::full_join(df_in_long, df_out_long,
@@ -200,7 +206,13 @@ track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL)
                                             is.na(value_in) & !is.na(value_out) ~ "Added",
                                             !is.na(value_in) & is.na(value_out) ~ "Removed"))
 
-  return(join)
+  if(!is.null(names)){
+
+    join_out <- join |>
+      dplyr::rename_with(~c(names[1], names[2]), c(value_in, value_out))
+  }
+
+  return(join_out)
 }
 
 

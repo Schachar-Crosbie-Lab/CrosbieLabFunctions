@@ -189,9 +189,7 @@ track_changes <- function(df_in = NULL, df_out = NULL, identifier_column = NULL,
 
   df_in_long <- df_in |>
     dplyr::mutate(dplyr::across(dplyr::all_of(dplyr::everything()), ~as.character(.x))) |>
-    tidyr::pivot_longer(cols = -c(identifier_column)) |>
-    dplyr::rename(variable = paste0('variable_',names[1]))
-
+    tidyr::pivot_longer(cols = -c(identifier_column))
 
   df_out_long <- df_out |>
     dplyr::mutate(dplyr::across(dplyr::all_of(dplyr::everything()), ~as.character(.x))) |>

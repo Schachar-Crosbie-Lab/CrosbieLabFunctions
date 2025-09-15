@@ -111,7 +111,6 @@ expand_checkboxes <- function(dd = NULL){
 
 }
 
-
 #### Clean Checkboxes ####
 #' @name clean_checkboxes
 #'
@@ -124,6 +123,14 @@ expand_checkboxes <- function(dd = NULL){
 #' This function corrects the check box data that should be missing by reading in the dataframe of interest and the REDCap data dictionary.
 #' It checks for whether any questions were completed on a form. If they were, it leaves the question as is. If no questions were completed, it changes to NA.
 #'
+#' @section Important:
+#' This project was developed for the Braincode API Pipeline. As such we prioritized cleaning projects with longitudinal and repeating events. This function will not work properly for...
+#'    * `Repeating Instruments Only` - when data are not logitudinal and not repeating
+#'    * `Longitudinal with data in the repeat_instrument column ` - the current iteration will not work to clean when there are repeating instruments only
+#' This function is likely to have issues. Watch closely.
+#'
+#'
+#'
 #' @param df The redcap export to clean
 #' @param dd The data dictionary that corresponds to the redcap export to clean
 #'
@@ -134,6 +141,254 @@ expand_checkboxes <- function(dd = NULL){
 #'
 
 clean_checkboxes <- function(df = NULL, dd = NULL){
+
+  # Check if longitudinal
+  longitudinal <- 'redcap_event_name' %in% colnames(df)
+
+  # Check if has repeating instruments
+  repeating <- any(c('redcap_repeat_instrument','redcap_repeat_instance') %in% colnames(df))
+
+  # Check for repeating instruments, as I haven't written functionality for this yet
+  if(repeating){
+    repeating_instruments <- max(df$redcap_repeat_instrument)
+  }
+
+  dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
+    dplyr::filter(field_type != 'descriptive')
+
+  # Need unique identifying column to pivot longer
+  id_col = dd_in$field_name[1]
+
+  #### Clean Checkboxes ####
+  #' Checkbox data always export from REDCap as either 0 or 1, regardless of if it's missing or not
+  #' A lot of the 0s should actually be NA, as the participant didn't complete the form
+  #' They are assigned a reference variable from the REDCap instrument that contained the checkbox
+  #' If the reference variable is missing, the checkbox is also set to missing
+  checkboxes_to_fix <- dd_in |>
+    dplyr::filter(field_type == "checkbox")
+
+  unique_forms <- unique(checkboxes_to_fix$form_name)
+
+  # Create data frame of values to fix
+  fix_checkboxes <- df |>
+    dplyr::select(id_col, any_of(c('redcap_event_name', 'redcap_repeat_instrument', 'redcap_repeat_instance')), dplyr::all_of(checkboxes_to_fix$field_name))
+
+  fix_checkboxes_out <- fix_checkboxes
+
+  #### Basic REDCap #####
+  if(!longitudinal & !repeating){
+
+    # Loop through individual forms
+    for(i in 1:length(unique_forms)){
+
+      var_form <- unique_forms[i]
+
+      var_names <- checkboxes_to_fix |>
+        dplyr::filter(form_name == var_form) |>
+        pull(field_name)
+
+      form_vars <- dd_in |>
+        dplyr::filter(form_name == var_form) |>
+        dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+        dplyr::select(field_name, field_type)
+
+      form_long <- df |>
+        dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+        dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+        tidyr::pivot_longer(cols = -c(id_col),
+                            names_to = 'field_name')  |>
+        dplyr::left_join(form_vars, by = 'field_name') |>
+        dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                               T ~ value)) |>
+        dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+        dplyr::filter(!is.na(value)) |>
+        dplyr::rename(id_col = !!id_col)
+
+      fix_checkboxes_out <- fix_checkboxes_out |>
+        #' Sometimes questions have been moved to inactive instruments
+        #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+        dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                !get(id_col) %in% form_long$id_col ~ NA,
+                                                                                T ~ .x)))
+    }
+
+    #### Only Longitudinal ####
+  } else if(longitudinal & !repeating){
+
+    # Clean all of the forms for each event at a time
+    for(k in 1:length(unique(df$redcap_event_name))){
+
+      event_name = unique(df$redcap_event_name)[k]
+
+      for(i in 1:length(unique_forms)){
+
+        var_form <- unique_forms[i]
+
+        var_names <- checkboxes_to_fix |>
+          dplyr::filter(form_name == var_form) |>
+          pull(field_name)
+
+        form_vars <- dd_in |>
+          dplyr::filter(form_name == var_form) |>
+          dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+          dplyr::select(field_name, field_type)
+
+        form_long <- df |>
+          dplyr::filter(redcap_event_name == event_name) |>
+          dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+          dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+          tidyr::pivot_longer(cols = -c(id_col),
+                              names_to = 'field_name')  |>
+          dplyr::left_join(form_vars, by = 'field_name') |>
+          dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                                 T ~ value)) |>
+          dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+          dplyr::filter(!is.na(value)) |>
+          dplyr::rename(id_col = !!id_col)
+
+        fix_checkboxes_out <- fix_checkboxes_out |>
+          #' Sometimes questions have been moved to inactive instruments
+          #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+          dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                  get(id_col) %in% form_long$id_col & redcap_event_name == event_name ~ .x,
+                                                                                  T ~ NA)))
+      }
+
+    }
+
+    #### Only Repeating ####
+  } else if(repeating & !longitudinal){
+
+    stop("This function has not been written for only repeating instruments yet")
+  } else if(repeating & longitudinal){
+
+    if(!is.na(repeating_instruments)){
+      stop("This function has not been written to handle repeating instruments yet. Only repeating instruments.")
+    }
+
+    # Clean all of the forms for each event at a time
+    for(k in 1:length(unique(df$redcap_event_name))){
+
+      event_name = unique(df$redcap_event_name)[k]
+      instances <- max(df$redcap_repeat_instance[which(df$redcap_event_name == event_name)])
+
+      if(!is.na(instances)){
+        for(j in 1:instances){
+
+          for(i in 1:length(unique_forms)){
+
+            var_form <- unique_forms[i]
+
+            var_names <- checkboxes_to_fix |>
+              dplyr::filter(form_name == var_form) |>
+              pull(field_name)
+
+            form_vars <- dd_in |>
+              dplyr::filter(form_name == var_form) |>
+              dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+              dplyr::select(field_name, field_type)
+
+            form_long <- df |>
+              dplyr::filter(redcap_event_name == event_name & redcap_repeat_instance == j) |>
+              dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+              dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+              tidyr::pivot_longer(cols = -c(id_col),
+                                  names_to = 'field_name')  |>
+              dplyr::left_join(form_vars, by = 'field_name') |>
+              dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                                     T ~ value)) |>
+              dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+              dplyr::filter(!is.na(value)) |>
+              dplyr::rename(id_col = !!id_col)
+
+            fix_checkboxes_out <- fix_checkboxes_out |>
+              #' Sometimes questions have been moved to inactive instruments
+              #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+              dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                      get(id_col) %in% form_long$id_col & redcap_event_name == event_name & redcap_repeat_instance == j ~ .x,
+                                                                                      !get(id_col) %in% form_long$id_col & redcap_repeat_instance == j ~ NA,
+                                                                                      T ~ .x)))
+          }
+        }
+      } else {
+        for(i in 1:length(unique_forms)){
+
+          var_form <- unique_forms[i]
+
+          var_names <- checkboxes_to_fix |>
+            dplyr::filter(form_name == var_form) |>
+            pull(field_name)
+
+          form_vars <- dd_in |>
+            dplyr::filter(form_name == var_form) |>
+            dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+            dplyr::select(field_name, field_type)
+
+          form_long <- df |>
+            dplyr::filter(redcap_event_name == event_name) |>
+            dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+            dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+            tidyr::pivot_longer(cols = -c(id_col),
+                                names_to = 'field_name')  |>
+            dplyr::left_join(form_vars, by = 'field_name') |>
+            dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                                   T ~ value)) |>
+            dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+            dplyr::filter(!is.na(value)) |>
+            dplyr::rename(id_col = !!id_col)
+
+          fix_checkboxes_out <- fix_checkboxes_out |>
+            #' Sometimes questions have been moved to inactive instruments
+            #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+            dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                    get(id_col) %in% form_long$id_col & redcap_event_name == event_name ~ .x,
+                                                                                    redcap_event_name != event_name ~ .x,
+                                                                                    T ~ NA)))
+        }
+      }
+
+
+
+
+    }
+  }
+
+  names_to_remove <- c('redcap_event_name','redcap_repeat_instrument','redcap_repeat_instance')
+
+  df_out <- df |>
+    dplyr::select(-dplyr::all_of(checkboxes_to_fix$field_name)) |>
+    dplyr::bind_cols(fix_checkboxes_out |> dplyr::select(-id_col, -any_of(names_to_remove))) |>
+    dplyr::select(dd_in$field_name, everything())
+
+  return(df_out)
+}
+
+#### Clean Checkboxes ####
+#' @name clean_checkboxes_basic
+#'
+#' @title Clean Checkboxes Basic
+#'
+#' @export
+#'
+#' @description
+#' When data are exported from REDCap, checkboxes always export as 1 or 0 regardless of whether the question was completed.
+#' This function corrects the check box data that should be missing by reading in the dataframe of interest and the REDCap data dictionary.
+#' It checks for whether any questions were completed on a form. If they were, it leaves the question as is. If no questions were completed, it changes to NA.
+#'
+#' @section IMPORTANT:
+#' This only works for non-repeating events and non-longitudinal projects
+#'
+#'
+#' @param df The redcap export to clean
+#' @param dd The data dictionary that corresponds to the redcap export to clean
+#'
+#' @import dplyr
+#' @importFrom tidyr pivot_longer
+#'
+#' @returns A redcap export with cleaned checkboxes
+#'
+
+clean_checkboxes_basic <- function(df = NULL, dd = NULL){
 
   dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
     dplyr::filter(field_type != 'descriptive')
@@ -187,7 +442,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
       #' Sometimes questions have been moved to inactive instruments
       #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
       dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
-                                                                              !id_col %in% form_long$id_col ~ NA,
+                                                                              !get(id_col) %in% form_long$id_col ~ NA,
                                                                               T ~ .x)))
 
   }
@@ -200,7 +455,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   return(df_out)
 }
 
-#### Clean REDCap Statuses ####
+#### Clean Checkboxes ####
 #' @name clean_redcap_statuses
 #'
 #' @title Clean REDCap Status Questions
@@ -212,6 +467,264 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
 #' These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
 #' This function addresses this issue
 #'
+#' @section Important:
+#' This project was developed for the Braincode API Pipeline. As such we prioritized cleaning projects with longitudinal and repeating events. This function will not work properly for...
+#'    * `Repeating Instruments Only` - when data are not logitudinal and not repeating
+#'    * `Longitudinal with data in the repeat_instrument column ` - the current iteration will not work to clean when there are repeating instruments only
+#' This function is likely to have issues. Watch closely.
+#'
+#' @param df The redcap export to clean
+#' @param dd The data dictionary that corresponds to the redcap export to clean
+#'
+#' @import dplyr
+#' @importFrom tidyr pivot_longer
+#'
+#' @returns A redcap export with cleaned checkboxes
+#'
+
+clean_redcap_statuses <- function(df = NULL, dd = NULL){
+
+  # Check if longitudinal
+  longitudinal <- 'redcap_event_name' %in% colnames(df)
+
+  # Check if has repeating instruments
+  repeating <- any(c('redcap_repeat_instrument','redcap_repeat_instance') %in% colnames(df))
+
+  # Check for repeating instruments, as I haven't written functionality for this yet
+  if(repeating){
+    repeating_instruments <- max(df$redcap_repeat_instrument)
+  }
+
+  dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
+    dplyr::filter(field_type != 'descriptive')
+
+  # Need unique identifying column to pivot longer
+  id_col = dd_in$field_name[1]
+
+  #### Clean Checkboxes ####
+  #' Checkbox data always export from REDCap as either 0 or 1, regardless of if it's missing or not
+  #' A lot of the 0s should actually be NA, as the participant didn't complete the form
+  #' They are assigned a reference variable from the REDCap instrument that contained the checkbox
+  #' If the reference variable is missing, the checkbox is also set to missing
+  checkboxes_to_fix <- dd_in |>
+    dplyr::filter(field_type == "checkbox")
+
+  unique_forms <- unique(checkboxes_to_fix$form_name)
+
+  # Create data frame of values to fix
+  fix_checkboxes <- df |>
+    dplyr::select(id_col, any_of(c('redcap_event_name', 'redcap_repeat_instrument', 'redcap_repeat_instance')), dplyr::all_of(checkboxes_to_fix$field_name))
+
+  fix_checkboxes_out <- fix_checkboxes
+
+  #### Basic REDCap #####
+  if(!longitudinal & !repeating){
+
+    # Loop through individual forms
+    for(i in 1:length(unique_forms)){
+
+      var_form <- unique_forms[i]
+
+      var_names <- checkboxes_to_fix |>
+        dplyr::filter(form_name == var_form) |>
+        pull(field_name)
+
+      form_vars <- dd_in |>
+        dplyr::filter(form_name == var_form) |>
+        dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+        dplyr::select(field_name, field_type)
+
+      form_long <- df |>
+        dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+        dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+        tidyr::pivot_longer(cols = -c(id_col),
+                            names_to = 'field_name')  |>
+        dplyr::left_join(form_vars, by = 'field_name') |>
+        dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                               T ~ value)) |>
+        dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+        dplyr::filter(!is.na(value)) |>
+        dplyr::rename(id_col = !!id_col)
+
+      fix_checkboxes_out <- fix_checkboxes_out |>
+        #' Sometimes questions have been moved to inactive instruments
+        #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+        dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                !get(id_col) %in% form_long$id_col ~ NA,
+                                                                                T ~ .x)))
+    }
+
+    #### Only Longitudinal ####
+  } else if(longitudinal & !repeating){
+
+    # Clean all of the forms for each event at a time
+    for(k in 1:length(unique(df$redcap_event_name))){
+
+      event_name = unique(df$redcap_event_name)[k]
+
+      for(i in 1:length(unique_forms)){
+
+        var_form <- unique_forms[i]
+
+        var_names <- checkboxes_to_fix |>
+          dplyr::filter(form_name == var_form) |>
+          pull(field_name)
+
+        form_vars <- dd_in |>
+          dplyr::filter(form_name == var_form) |>
+          dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+          dplyr::select(field_name, field_type)
+
+        form_long <- df |>
+          dplyr::filter(redcap_event_name == event_name) |>
+          dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+          dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+          tidyr::pivot_longer(cols = -c(id_col),
+                              names_to = 'field_name')  |>
+          dplyr::left_join(form_vars, by = 'field_name') |>
+          dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                                 T ~ value)) |>
+          dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+          dplyr::filter(!is.na(value)) |>
+          dplyr::rename(id_col = !!id_col)
+
+        fix_checkboxes_out <- fix_checkboxes_out |>
+          #' Sometimes questions have been moved to inactive instruments
+          #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+          dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                  get(id_col) %in% form_long$id_col & redcap_event_name == event_name ~ .x,
+                                                                                  T ~ NA)))
+      }
+
+    }
+
+    #### Only Repeating ####
+  } else if(repeating & !longitudinal){
+
+    stop("This function has not been written for only repeating instruments yet")
+  } else if(repeating & longitudinal){
+
+    if(!is.na(repeating_instruments)){
+      stop("This function has not been written to handle repeating instruments yet. Only repeating instruments.")
+    }
+
+    # Clean all of the forms for each event at a time
+    for(k in 1:length(unique(df$redcap_event_name))){
+
+      event_name = unique(df$redcap_event_name)[k]
+      instances <- max(df$redcap_repeat_instance[which(df$redcap_event_name == event_name)])
+
+      if(!is.na(instances)){
+        for(j in 1:instances){
+
+          for(i in 1:length(unique_forms)){
+
+            var_form <- unique_forms[i]
+
+            var_names <- checkboxes_to_fix |>
+              dplyr::filter(form_name == var_form) |>
+              pull(field_name)
+
+            form_vars <- dd_in |>
+              dplyr::filter(form_name == var_form) |>
+              dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+              dplyr::select(field_name, field_type)
+
+            form_long <- df |>
+              dplyr::filter(redcap_event_name == event_name & redcap_repeat_instance == j) |>
+              dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+              dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+              tidyr::pivot_longer(cols = -c(id_col),
+                                  names_to = 'field_name')  |>
+              dplyr::left_join(form_vars, by = 'field_name') |>
+              dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                                     T ~ value)) |>
+              dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+              dplyr::filter(!is.na(value)) |>
+              dplyr::rename(id_col = !!id_col)
+
+            fix_checkboxes_out <- fix_checkboxes_out |>
+              #' Sometimes questions have been moved to inactive instruments
+              #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+              dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                      get(id_col) %in% form_long$id_col & redcap_event_name == event_name & redcap_repeat_instance == j ~ .x,
+                                                                                      !get(id_col) %in% form_long$id_col & redcap_repeat_instance == j ~ NA,
+                                                                                      T ~ .x)))
+          }
+        }
+      } else {
+        for(i in 1:length(unique_forms)){
+
+          var_form <- unique_forms[i]
+
+          var_names <- checkboxes_to_fix |>
+            dplyr::filter(form_name == var_form) |>
+            pull(field_name)
+
+          form_vars <- dd_in |>
+            dplyr::filter(form_name == var_form) |>
+            dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+            dplyr::select(field_name, field_type)
+
+          form_long <- df |>
+            dplyr::filter(redcap_event_name == event_name) |>
+            dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
+            dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
+            tidyr::pivot_longer(cols = -c(id_col),
+                                names_to = 'field_name')  |>
+            dplyr::left_join(form_vars, by = 'field_name') |>
+            dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
+                                                   T ~ value)) |>
+            dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
+            dplyr::filter(!is.na(value)) |>
+            dplyr::rename(id_col = !!id_col)
+
+          fix_checkboxes_out <- fix_checkboxes_out |>
+            #' Sometimes questions have been moved to inactive instruments
+            #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+            dplyr::mutate(dplyr::across(dplyr::all_of(var_names), ~dplyr::case_when(.x == 1 ~ .x,
+                                                                                    get(id_col) %in% form_long$id_col & redcap_event_name == event_name ~ .x,
+                                                                                    redcap_event_name != event_name ~ .x,
+                                                                                    T ~ NA)))
+        }
+      }
+
+
+
+
+    }
+  }
+
+  names_to_remove <- c('redcap_event_name','redcap_repeat_instrument','redcap_repeat_instance')
+
+  df_out <- df |>
+    dplyr::select(-dplyr::all_of(checkboxes_to_fix$field_name)) |>
+    dplyr::bind_cols(fix_checkboxes_out |> dplyr::select(-id_col, -any_of(names_to_remove))) |>
+    dplyr::select(dd_in$field_name, everything())
+
+  return(df_out)
+}
+
+
+
+
+
+
+#### Clean REDCap Statuses ####
+#' @name clean_redcap_statuses_basic
+#'
+#' @title Clean REDCap Status Questions - Basic
+#'
+#' @export
+#'
+#' @description
+#' When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as [form_name]_complete.
+#' These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
+#' This function addresses this issue
+#'
+#' @section IMPORTANT:
+#' This only works for non-repeating events and non-longitudinal projects
+#'
 #' @param df The redcap export to clean
 #' @param dd The data dictionary that corresponds to the redcap export to clean
 #'
@@ -221,7 +734,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
 #' @returns A redcap export with cleaned status questions
 #'
 
-clean_redcap_statuses <- function(df = NULL, dd = NULL){
+clean_redcap_statuses_basic <- function(df = NULL, dd = NULL){
 
   dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
     dplyr::filter(field_type != 'descriptive')
@@ -264,7 +777,7 @@ clean_redcap_statuses <- function(df = NULL, dd = NULL){
       #' Sometimes questions have been moved to inactive instruments
       #' When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
       dplyr::mutate(dplyr::across(dplyr::all_of(var), ~dplyr::case_when(.x %in% c(1,2) ~ .x,
-                                                                        !id_col %in% form_long$id_col ~ NA,
+                                                                        !get(id_col) %in% form_long$id_col ~ NA,
                                                                         T ~ .x)))
 
   }

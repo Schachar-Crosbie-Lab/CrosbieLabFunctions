@@ -12,8 +12,18 @@ clean_redcap_statuses(df = NULL, dd = NULL)
 \item{dd}{The data dictionary that corresponds to the redcap export to clean}
 }
 \value{
-A redcap export with cleaned status questions
+A redcap export with cleaned checkboxes
 
+Checkbox data always export from REDCap as either 0 or 1, regardless of if it's missing or not
+A lot of the 0s should actually be NA, as the participant didn't complete the form
+They are assigned a reference variable from the REDCap instrument that contained the checkbox
+If the reference variable is missing, the checkbox is also set to missing
+Sometimes questions have been moved to inactive instruments
+When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+Sometimes questions have been moved to inactive instruments
+When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
+Sometimes questions have been moved to inactive instruments
+When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
 Sometimes questions have been moved to inactive instruments
 When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
 }
@@ -22,3 +32,11 @@ When data are exported from REDCap via the API, the status of each form is also 
 These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
 This function addresses this issue
 }
+\section{Important}{
+
+This project was developed for the Braincode API Pipeline. As such we prioritized cleaning projects with longitudinal and repeating events. This function will not work properly for...
+   * `Repeating Instruments Only` - when data are not logitudinal and not repeating
+   * `Longitudinal with data in the repeat_instrument column ` - the current iteration will not work to clean when there are repeating instruments only
+This function is likely to have issues. Watch closely.
+}
+

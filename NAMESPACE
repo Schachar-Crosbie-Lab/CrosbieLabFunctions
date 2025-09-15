@@ -2,8 +2,10 @@
 
 export(body_builder)
 export(clean_checkboxes)
+export(clean_checkboxes_basic)
 export(clean_redcap_dd_names)
 export(clean_redcap_statuses)
+export(clean_redcap_statuses_basic)
 export(compare_df)
 export(describe_df)
 export(expand_checkboxes)

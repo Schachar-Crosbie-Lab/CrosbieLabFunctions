@@ -129,6 +129,8 @@ expand_checkboxes <- function(dd = NULL){
 #'    * `Longitudinal with data in the repeat_instrument column ` - the current iteration will not work to clean when there are repeating instruments only
 #' This function is likely to have issues. Watch closely.
 #'
+#' @section Development:
+#' 2025-09-16: Added the capacity to handle pre-expanded checkbox values using the \code{\link[REDCapR]{redcap_variables}} function
 #'
 #'
 #' @param df The redcap export to clean
@@ -153,8 +155,14 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
     repeating_instruments <- max(df$redcap_repeat_instrument)
   }
 
-  dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
-    dplyr::filter(field_type != 'descriptive')
+  if('choice_value' %in% colnames(dd)){
+    dd_in <- dd |>
+      dplyr::filter(field_type != 'descriptive')
+  } else{
+    dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
+      dplyr::filter(field_type != 'descriptive')
+  }
+
 
   # Need unique identifying column to pivot longer
   id_col = dd_in$field_name[1]

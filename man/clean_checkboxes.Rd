@@ -40,3 +40,8 @@ This project was developed for the Braincode API Pipeline. As such we prioritize
 This function is likely to have issues. Watch closely.
 }
 
+\section{Development}{
+
+2025-09-16: Added the capacity to handle pre-expanded checkbox values using the \code{\link[REDCapR]{redcap_variables}} function
+}
+

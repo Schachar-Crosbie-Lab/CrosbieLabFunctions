@@ -138,6 +138,7 @@ expand_checkboxes <- function(dd = NULL){
 #'
 #' @import dplyr
 #' @importFrom tidyr pivot_longer
+#' @importFrom rlang .data
 #'
 #' @returns A redcap export with cleaned checkboxes
 #'
@@ -157,10 +158,10 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
 
   if('choice_value' %in% colnames(dd)){
     dd_in <- dd |>
-      dplyr::filter(field_type != 'descriptive')
+      dplyr::filter(.data$field_type != 'descriptive')
   } else{
     dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
-      dplyr::filter(field_type != 'descriptive')
+      dplyr::filter(.data$field_type != 'descriptive')
   }
 
 
@@ -173,7 +174,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   #' They are assigned a reference variable from the REDCap instrument that contained the checkbox
   #' If the reference variable is missing, the checkbox is also set to missing
   checkboxes_to_fix <- dd_in |>
-    dplyr::filter(field_type == "checkbox")
+    dplyr::filter(.data$field_type == "checkbox")
 
   unique_forms <- unique(checkboxes_to_fix$form_name)
 
@@ -192,13 +193,13 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
       var_form <- unique_forms[i]
 
       var_names <- checkboxes_to_fix |>
-        dplyr::filter(form_name == var_form) |>
-        pull(field_name)
+        dplyr::filter(.data$form_name == var_form) |>
+        pull(.data$field_name)
 
       form_vars <- dd_in |>
-        dplyr::filter(form_name == var_form) |>
-        dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
-        dplyr::select(field_name, field_type)
+        dplyr::filter(.data$form_name == var_form) |>
+        dplyr::filter(.data$field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+        dplyr::select(.data$field_name, field_type)
 
       form_long <- df |>
         dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
@@ -209,7 +210,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
         dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
                                                T ~ value)) |>
         dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
-        dplyr::filter(!is.na(value)) |>
+        dplyr::filter(!is.na(.data$value)) |>
         dplyr::rename(id_col = !!id_col)
 
       fix_checkboxes_out <- fix_checkboxes_out |>
@@ -233,16 +234,16 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
         var_form <- unique_forms[i]
 
         var_names <- checkboxes_to_fix |>
-          dplyr::filter(form_name == var_form) |>
-          pull(field_name)
+          dplyr::filter(.data$form_name == var_form) |>
+          pull(.data$field_name)
 
         form_vars <- dd_in |>
-          dplyr::filter(form_name == var_form) |>
-          dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
-          dplyr::select(field_name, field_type)
+          dplyr::filter(.data$form_name == var_form) |>
+          dplyr::filter(.data$field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+          dplyr::select(.data$field_name, .data$field_type)
 
         form_long <- df |>
-          dplyr::filter(redcap_event_name == event_name) |>
+          dplyr::filter(.data$redcap_event_name == event_name) |>
           dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
           dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
           tidyr::pivot_longer(cols = -c(id_col),
@@ -251,7 +252,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
           dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
                                                  T ~ value)) |>
           dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
-          dplyr::filter(!is.na(value)) |>
+          dplyr::filter(!is.na(.data$value)) |>
           dplyr::rename(id_col = !!id_col)
 
         fix_checkboxes_out <- fix_checkboxes_out |>
@@ -288,16 +289,16 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
             var_form <- unique_forms[i]
 
             var_names <- checkboxes_to_fix |>
-              dplyr::filter(form_name == var_form) |>
-              pull(field_name)
+              dplyr::filter(.data$form_name == var_form) |>
+              pull(.data$field_name)
 
             form_vars <- dd_in |>
-              dplyr::filter(form_name == var_form) |>
-              dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
-              dplyr::select(field_name, field_type)
+              dplyr::filter(.data$form_name == var_form) |>
+              dplyr::filter(.data$field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+              dplyr::select(.data$field_name, field_type)
 
             form_long <- df |>
-              dplyr::filter(redcap_event_name == event_name & redcap_repeat_instance == j) |>
+              dplyr::filter(.data$redcap_event_name == event_name & .data$redcap_repeat_instance == j) |>
               dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
               dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
               tidyr::pivot_longer(cols = -c(id_col),
@@ -306,7 +307,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
               dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
                                                      T ~ value)) |>
               dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
-              dplyr::filter(!is.na(value)) |>
+              dplyr::filter(!is.na(.data$value)) |>
               dplyr::rename(id_col = !!id_col)
 
             fix_checkboxes_out <- fix_checkboxes_out |>
@@ -328,12 +329,12 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
             pull(field_name)
 
           form_vars <- dd_in |>
-            dplyr::filter(form_name == var_form) |>
-            dplyr::filter(field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
-            dplyr::select(field_name, field_type)
+            dplyr::filter(.data$form_name == var_form) |>
+            dplyr::filter(.data$field_type %in% c('text','radio','yesno','dropdown','notes','checkbox')) |>
+            dplyr::select(.data$field_name, .data$field_type)
 
           form_long <- df |>
-            dplyr::filter(redcap_event_name == event_name) |>
+            dplyr::filter(.data$redcap_event_name == event_name) |>
             dplyr::select(id_col, dplyr::all_of(form_vars$field_name)) |>
             dplyr::mutate(dplyr::across(dplyr::everything(), ~as.character(.x))) |>
             tidyr::pivot_longer(cols = -c(id_col),
@@ -342,7 +343,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
             dplyr::mutate(value = dplyr::case_when(field_type == 'checkbox' & value == 0 ~ NA_character_,
                                                    T ~ value)) |>
             dplyr::mutate(value = dplyr::na_if(trimws(value),"")) |>
-            dplyr::filter(!is.na(value)) |>
+            dplyr::filter(!is.na(.data$value)) |>
             dplyr::rename(id_col = !!id_col)
 
           fix_checkboxes_out <- fix_checkboxes_out |>

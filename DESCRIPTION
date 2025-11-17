@@ -1,7 +1,7 @@
 Package: CrosbieLabFunctions
 Type: Package
 Title: Commonly used functions in the Crosbie Lab to make data analysis more efficient
-Version: 0.6.3
+Version: 0.7.0
 Authors@R: c(
     person(
       "Jonathan", "Clutton",
@@ -20,9 +20,11 @@ Imports:
     cli,
     dplyr,
     janitor,
+    lifecycle,
     methods,
     purrr,
     reticulate,
+    rlang,
     stats,
     stringr,
     tidyr

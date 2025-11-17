@@ -42,7 +42,7 @@ clean_redcap_dd_names <- function(dd = NULL){
 #' @export
 #'
 #' @description REDCap data dictionaries don't match the REDCap exports specifically for checkbox questions. Checkbox questions
-#' append a ___[raw_value] to each question for each answer choice.
+#' append a ___`raw_value` to each question for each answer choice.
 #' This function takes a data dictionary and adds a row for each checkbox answer choice so that the dictionary matches the data frame
 #'
 #' @import dplyr
@@ -130,7 +130,7 @@ expand_checkboxes <- function(dd = NULL){
 #' This function is likely to have issues. Watch closely.
 #'
 #' @section Development:
-#' 2025-09-16: Added the capacity to handle pre-expanded checkbox values using the \code{\link[REDCapR]{redcap_variables}} function
+#' 2025-09-16: Added the capacity to handle pre-expanded checkbox values using the [REDCapR::redcap_variables()] function
 #'
 #'
 #' @param df The redcap export to clean
@@ -471,7 +471,7 @@ clean_checkboxes_basic <- function(df = NULL, dd = NULL){
 #' @export
 #'
 #' @description
-#' When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as [form_name]_complete.
+#' When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as `form_name`_complete.
 #' These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
 #' This function addresses this issue
 #'
@@ -726,8 +726,8 @@ clean_redcap_statuses <- function(df = NULL, dd = NULL){
 #' @export
 #'
 #' @description
-#' When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as [form_name]_complete.
-#' These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
+#' When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as `form_name`_complete.
+#' These field default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
 #' This function addresses this issue
 #'
 #' @section IMPORTANT:

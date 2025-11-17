@@ -1,37 +1,13 @@
-#### Load language ####
-#### Declares language upload loading the package.
-.onAttach <- function(libname, pkgname) {
-  if(utils::packageVersion('CrosbieLabFunctions') != "0.6.3"){
-
-    cli::cli_ul(paste0("This version of CrosbieLabFunctions is out of date. Please follow these instructions to re-install CrosbieLabFunctions. \n\n",
-                       "1. Restart R - Go to the session tab and select Restart R\n\n",
-                       "2. Use pak or devtools to reinstall the package \n\n",
-                       "   devtools - {.code devtools::install_github('Schachar-Crosbie-Lab/CrosbieLabFunctions')}\n\n",
-                       "   pak - {.code pak::pkg_install('Schachar-Crosbie-Lab/CrosbieLabFunctions')}"))
-
-  } else {
-    packageStartupMessage("CrosbieLabFunctions has been loaded and is up-to-date")
-  }
-
-}
-
-#### Global Variables ####
-globalVariables(c(
-  # Variables created in \link(describe_df) and \link(compare_df) but are not variables needed in input data.frame
-  'variable','data_type_output','dif_in_count','dif_in_mean',
-  'equal','value_in','value_out',
-  'gender','youth','p_respondent','cis_study_tscores',
-  # send_email
-  'attachment',
-  # redcap_data_dictionary_functions.R global variables
-  'field_type', 'form_name', 'field_name', 'value', 'variable_field_name', 'choices_calculations_or_slider_labels',
-  'branching_logic_show_field_only_if', 'question_number_surveys_only', 'field_name', 'field_type', 'field_name_base',
-  'select_choices_or_calculations', 'row_num', 'choice', 'comma', 'raw_value','form','redcap_repeat_instance','redcap_event_name'))
-
 
 #' @name describe_df
 #'
 #' @title Return descriptive statistics about all variables in a data.frame
+#'
+#' @description
+#' `r lifecycle::badge('experimental')`
+#' This function returns data type, count, number missing, mean, median, min, max, and standard deviation for all numberic columns in a dataframe.
+#' It returns data type, count, and missing for any non-numeric columns in a dataframe.
+#'
 #'
 #' @param df a data.frame object
 #'
@@ -102,7 +78,9 @@ describe_df <- function(df = NULL){
 #'
 #' @title Compare the the differences between two dataframes
 #'
-#' @description Commonly in the Crosbie lab, we need to be visually inspecting the changes code makes to a dataframe. This function takes an input and an output dataframe and returns the differences between the two
+#' @description
+#' `r lifecycle::badge('experimental')` \cr
+#' Commonly in the Crosbie lab, we need to be visually inspecting the changes code makes to a dataframe. This function takes an input and an output dataframe and returns the differences between the two
 #'
 #' @param input_df data.frame object before changes
 #' @param output_df data.frame object after changes
@@ -164,7 +142,9 @@ compare_df <- function(input_df = NULL, output_df = NULL, names = c('input','out
 #'
 #' @export
 #'
-#' @description This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
+#' @description
+#' `r lifecycle::badge('experimental')`
+#' This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
 #'
 #' @section Development Notes:
 #' 2025-09-12: Added naming functionality

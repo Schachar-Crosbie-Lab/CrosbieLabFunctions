@@ -35,13 +35,15 @@ It checks for whether any questions were completed on a form. If they were, it l
 \section{Important}{
 
 This project was developed for the Braincode API Pipeline. As such we prioritized cleaning projects with longitudinal and repeating events. This function will not work properly for...
-   * `Repeating Instruments Only` - when data are not logitudinal and not repeating
-   * `Longitudinal with data in the repeat_instrument column ` - the current iteration will not work to clean when there are repeating instruments only
+\itemize{
+\item \verb{Repeating Instruments Only} - when data are not logitudinal and not repeating
+\item \verb{Longitudinal with data in the repeat_instrument column } - the current iteration will not work to clean when there are repeating instruments only
 This function is likely to have issues. Watch closely.
+}
 }
 
 \section{Development}{
 
-2025-09-16: Added the capacity to handle pre-expanded checkbox values using the \code{\link[REDCapR]{redcap_variables}} function
+2025-09-16: Added the capacity to handle pre-expanded checkbox values using the \code{\link[REDCapR:redcap_variables]{REDCapR::redcap_variables()}} function
 }
 

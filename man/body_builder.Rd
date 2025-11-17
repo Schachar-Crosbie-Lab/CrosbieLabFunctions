@@ -16,6 +16,6 @@ formatting in the sections, i.e. bolding text, the character text needs to be HT
 It's common in the Crosbie lab to need to send an email as a part of an automated pipeline. This function reduces the time to create and HTML body.
 }
 \details{
-The builder automatically adds the formatting HTML like <tr>, etc. Use the sections param to create the sections in the email. This assumes everything is left aligned.
+The builder automatically adds the formatting HTML like \if{html}{\out{<tr>}}, etc. Use the sections param to create the sections in the email. This assumes everything is left aligned.
 For more complicated bodies, you'll need to build it yourself or update this function
 }

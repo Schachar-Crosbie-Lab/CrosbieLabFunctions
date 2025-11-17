@@ -18,8 +18,8 @@ Sometimes questions have been moved to inactive instruments
 When this occurs, this method for cleaning checkboxes doesn't work, so I make sure no 1's are overwritted.
 }
 \description{
-When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as [form_name]_complete.
-These fiels default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
+When data are exported from REDCap via the API, the status of each form is also exported. These status questions are always formatted as \code{form_name}_complete.
+These field default to 0 in the export even if the form hasn't been opened yet. If a form hasn't been opened, we want these questions to be NA.
 This function addresses this issue
 }
 \section{IMPORTANT}{

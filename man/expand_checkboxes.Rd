@@ -19,6 +19,6 @@ should have one row for every possible column in the REDCap data export
 }
 \description{
 REDCap data dictionaries don't match the REDCap exports specifically for checkbox questions. Checkbox questions
-append a ___[raw_value] to each question for each answer choice.
+append a ___\code{raw_value} to each question for each answer choice.
 This function takes a data dictionary and adds a row for each checkbox answer choice so that the dictionary matches the data frame
 }

@@ -13,5 +13,7 @@ describe_df(df = NULL)
 a data.frame with descriptive statistics
 }
 \description{
-Return descriptive statistics about all variables in a data.frame
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function returns data type, count, number missing, mean, median, min, max, and standard deviation for all numberic columns in a dataframe.
+It returns data type, count, and missing for any non-numeric columns in a dataframe.
 }

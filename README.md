@@ -5,6 +5,9 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/jclutton/CrosbieLabFunctions/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jclutton/CrosbieLabFunctions/actions/workflows/R-CMD-check.yaml)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 The goal of CrosbieLabFunctions is to create a host of functions that

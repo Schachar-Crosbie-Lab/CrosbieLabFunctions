@@ -24,6 +24,7 @@ track_changes(
 A data frame with changes
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function can be used to see changes between two data frames. It's intended to be used to see the changes code introduces.
 }
 \section{Development Notes}{

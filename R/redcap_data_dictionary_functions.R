@@ -131,6 +131,7 @@ expand_checkboxes <- function(dd = NULL){
 #'
 #' @section Development:
 #' 2025-09-16: Added the capacity to handle pre-expanded checkbox values using the [REDCapR::redcap_variables()] function
+#' 2025-11-24: Handled blank 'complete' forms. Not perfect. Made a work around for the expedition_tools where any form with only a complete status is removed. Might need to revisit.
 #'
 #'
 #' @param df The redcap export to clean
@@ -158,10 +159,18 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
 
   if('choice_value' %in% colnames(dd)){
     dd_in <- dd |>
-      dplyr::filter(.data$field_type != 'descriptive')
+      dplyr::filter(.data$field_type != 'descriptive') |>
+      group_by(.data$form_name) |>
+      mutate(n = n()) |>
+      ungroup() |>
+      filter(!(.data$n == 1 & grepl('_complete', .data$field_name)))
   } else{
     dd_in <- CrosbieLabFunctions::expand_checkboxes(dd) |>
-      dplyr::filter(.data$field_type != 'descriptive')
+      dplyr::filter(.data$field_type != 'descriptive') |>
+      group_by(.data$form_name) |>
+      mutate(n = n()) |>
+      ungroup() |>
+      filter(!(.data$n == 1 & grepl('_complete', .data$field_name)))
   }
 
 
@@ -367,7 +376,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   df_out <- df |>
     dplyr::select(-dplyr::all_of(checkboxes_to_fix$field_name)) |>
     dplyr::bind_cols(fix_checkboxes_out |> dplyr::select(-id_col, -any_of(names_to_remove))) |>
-    dplyr::select(dd_in$field_name, everything())
+    dplyr::select(dd_in$field_name, any_of(everything()))
 
   return(df_out)
 }

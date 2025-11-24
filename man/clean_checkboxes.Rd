@@ -45,5 +45,6 @@ This function is likely to have issues. Watch closely.
 \section{Development}{
 
 2025-09-16: Added the capacity to handle pre-expanded checkbox values using the \code{\link[REDCapR:redcap_variables]{REDCapR::redcap_variables()}} function
+2025-11-24: Handled blank 'complete' forms. Not perfect. Made a work around for the expedition_tools where any form with only a complete status is removed. Might need to revisit.
 }
 

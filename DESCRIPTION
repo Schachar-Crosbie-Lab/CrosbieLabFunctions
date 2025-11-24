@@ -19,14 +19,19 @@ BugReports: https://github.com/jclutton/CrosbieLabFunctions/issues
 Imports: 
     cli,
     dplyr,
+    here,
     janitor,
     lifecycle,
+    lubridate,
     methods,
     purrr,
+    REDCapR,
     reticulate,
+    rio,
     rlang,
     stats,
     stringr,
+    tibble,
     tidyr
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)

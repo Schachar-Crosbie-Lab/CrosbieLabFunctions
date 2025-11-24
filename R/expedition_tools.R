@@ -9,6 +9,8 @@
 #' This function uses a REDCap API token to return the project's data and dictionary.
 #' This work relies on REDCapR. See \link[REDCapR]{redcap_read}
 #'
+#' @export
+#'
 #' @inheritParams REDCapR::redcap_read
 #' @inheritParams REDCapR::redcap_metadata_read
 #' @inheritParams REDCapR::redcap_event_instruments
@@ -77,6 +79,8 @@ get_data <- function(token = NULL, redcap_uri = NULL, fields = NULL, export_surv
 #' This function "cleans" REDCap data from the [get_data()] function. To clean the data, the function uses the [clean_checkboxes()] function and the project's data dictionary to expand the checkboxes
 #' and the form statuses to change 0's to NA when an instrument is empty.
 #'
+#' @export
+#'
 #' @param list a list that must contain the following
 #'    * `df`: The data in the associated REDCap project
 #'    * `dd`: A dataframe with the project's data dictionary
@@ -122,6 +126,8 @@ clean_data <- function(list = NULL) {
 #' We now have a cleaned version of the data in [clean_data()]. We need to reconcile for changes in the out project. This function 1) compares the metadata and 2) looks for changes in the
 #' input to output projects using the [track_changes()] function. If data are being overwritten, the process is stopped and a record of the differences is saved in the error_data.csv file. In order for the function to work you pass a list with
 #' the input df, dd and events, and pass the output token and redcap_uri. The function gets the most up to date data from the output project and compares it with the input data
+#'
+#' @export
 #'
 #' @inheritParams REDCapR::redcap_read
 #' @inheritParams REDCapR::redcap_metadata_read
@@ -239,6 +245,8 @@ reconcile_data <- function(list = NULL,
 #'  `r lifecycle::badge('experimental')`
 #' This function takes the list from reconcile data and writes data to a REDCap project
 #'
+#' @export
+#'
 #' @inheritParams REDCapR::redcap_write
 #' @param list The list returned from [reconcile_data()]
 #' @param overwrite_blanks T/F - allows overwriting blanks if changing data from a value to a blank
@@ -304,6 +312,8 @@ write_data <- function(list = NULL,
 #' @description
 #'  `r lifecycle::badge('experimental')`
 #' This function backs up the data that has just been written from [write_data()]
+#'
+#' @export
 #'
 #' @param list The list returned from [write_data()]
 #' @param file_path The file path to the backup folder

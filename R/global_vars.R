@@ -1,7 +1,7 @@
 #### Load language ####
 #### Declares language upload loading the package.
 .onAttach <- function(libname, pkgname) {
-  if(utils::packageVersion('CrosbieLabFunctions') != "0.7.2"){
+  if(utils::packageVersion('CrosbieLabFunctions') != "0.7.3"){
 
     cli::cli_ul(paste0("This version of CrosbieLabFunctions is out of date. Please follow these instructions to re-install CrosbieLabFunctions. \n\n",
                        "1. Restart R - Go to the session tab and select Restart R\n\n",

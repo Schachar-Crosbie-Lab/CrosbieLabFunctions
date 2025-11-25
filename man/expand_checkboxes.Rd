@@ -13,12 +13,17 @@ expand_checkboxes(dd = NULL)
 a data dictionary dataframe with a row for each checkbox option. Two additional columns are added to the data dictionary - 'field_name_base' and 'row_num'
 The column to match the column names in the dataframe is 'field_name'
 The column with the base name (as data dictionaries are usually exported) is 'field_name_base'
-
-REDCap export data dictionary joins the raw data dictionary with all of the checkbox possibilities. This data dictionary
-should have one row for every possible column in the REDCap data export
 }
 \description{
 REDCap data dictionaries don't match the REDCap exports specifically for checkbox questions. Checkbox questions
 append a ___\code{raw_value} to each question for each answer choice.
 This function takes a data dictionary and adds a row for each checkbox answer choice so that the dictionary matches the data frame
 }
+\section{Development}{
+
+2025-11-25: Checkboxes that have a negative value in the raw values get converted into an underscore in the export.
+
+REDCap export data dictionary joins the raw data dictionary with all of the checkbox possibilities. This data dictionary
+should have one row for every possible column in the REDCap data export
+}
+

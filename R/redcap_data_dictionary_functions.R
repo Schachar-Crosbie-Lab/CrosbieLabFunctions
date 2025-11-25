@@ -56,6 +56,9 @@ clean_redcap_dd_names <- function(dd = NULL){
 #' The column to match the column names in the dataframe is 'field_name'
 #' The column with the base name (as data dictionaries are usually exported) is 'field_name_base'
 #'
+#' @section Development:
+#' 2025-11-25: Checkboxes that have a negative value in the raw values get converted into an underscore in the export.
+#'
 
 
 expand_checkboxes <- function(dd = NULL){
@@ -81,7 +84,7 @@ expand_checkboxes <- function(dd = NULL){
                           values_to = "choice") |>
       dplyr::filter(!is.na(choice)) |>
       dplyr::mutate(comma = stringr::str_locate(choice, ",")[,"start"]) |>
-      dplyr::mutate(raw_value = trimws(stringr::str_sub(choice, 1, comma-1))) |>
+      dplyr::mutate(raw_value = stringr::str_replace(trimws(stringr::str_sub(choice, 1, comma-1)), pattern = "-", replacement = "_")) |>
       dplyr::mutate(field_name = paste0(field_name_base,"___",raw_value)) |>
       dplyr::select(field_name, field_name_base)  |>
       dplyr::left_join(dd_in, by = "field_name_base")
@@ -281,7 +284,7 @@ clean_checkboxes <- function(df = NULL, dd = NULL){
   } else if(repeating & longitudinal){
 
     if(!is.na(repeating_instruments)){
-      stop("This function has not been written to handle repeating instruments yet. Only repeating instruments.")
+      stop("This function has not been written to handle repeating instruments yet. Only repeating instances")
     }
 
     # Clean all of the forms for each event at a time

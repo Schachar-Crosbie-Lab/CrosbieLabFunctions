@@ -1,7 +1,7 @@
 Package: CrosbieLabFunctions
 Type: Package
 Title: Commonly used functions in the Crosbie Lab to make data analysis more efficient
-Version: 0.7.2
+Version: 0.7.3
 Authors@R: c(
     person(
       "Jonathan", "Clutton",
